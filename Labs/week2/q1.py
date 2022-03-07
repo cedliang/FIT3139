@@ -12,7 +12,6 @@ def composeBin(powers_list: list[list[int, int]]):
 
 
 def toBinAux(currentexp: int, currentn: int, current_powerslist: list[list[int, int]]):
-    # base case
     if currentexp == -16 or currentn == 0:
         return currentexp, currentn, current_powerslist
     else:
