@@ -8,6 +8,8 @@ def composeBin(powers_list: list[list[int, int]]):
         return returnstr[:-1]
     if (appendZeros := powers_list[-1][0]) > 0:
         return returnstr+appendZeros*"0"
+    if (powers_list[0][0]) < 0:
+        return "0."+returnstr
     return returnstr
 
 
@@ -25,6 +27,6 @@ def toBin(real_n: float):
 
 
 if __name__ == "__main__":
-    dec_num: float = 88.893
+    dec_num: float = 10.893
 
     print(toBin(dec_num))
