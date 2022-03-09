@@ -23,10 +23,10 @@ def toBinAux(currentexp: int, currentn: int, current_powerslist: list[list[int, 
 
 
 def toBin(real_n: float):
-    return composeBin(toBinAux(math.floor(math.log(real_n, 2)), real_n, [])[2])
+    return (composeBin(toBinAux(math.floor(math.log(real_n, 2)), real_n, [])[2]) if real_n > 0 else "-"+composeBin(toBinAux(math.floor(math.log((-1)*real_n, 2)), (-1)*real_n, [])[2])) if real_n != 0 else 0
 
 
 if __name__ == "__main__":
-    dec_num: float = 10.893
+    dec_num: float = 0
 
     print(toBin(dec_num))
