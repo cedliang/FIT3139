@@ -1,18 +1,28 @@
 import math
 import itertools
+import operator
 
-#curried approach
+
 def e_x_nthterm(x: int):
-    def f(n: int):
-        return (x**n)/math.factorial(n)
-    return f
+    return lambda n: (x**n)/math.factorial(n)
 
-#generator approach
 def e_x_nthterm_gen(x: int):
     n = 0
     while True:
         yield (x**n)/math.factorial(n)
         n += 1
+
+
+def fixed_num_map(x: int, num_terms: int):
+    def cumulative_sum_list_curried(acc):
+        return lambda list_to_sum: ([acc+list_to_sum[0]] + cumulative_sum_list_curried(acc+list_to_sum[0])(list_to_sum[1:]) if list_to_sum != [] else [])
+
+    cumulative_sum = cumulative_sum_list_curried(0)(
+        series_terms := list(map(e_x_nthterm(x), list(range(num_terms)))))
+    errors = list(map(lambda tup: operator.truediv(
+        tup[0], tup[1]), zip(series_terms, cumulative_sum)))
+
+    return series_terms, cumulative_sum, errors
 
 
 def fixed_num_terms(x: int, num_terms: int):
@@ -27,29 +37,23 @@ def fixed_num_terms(x: int, num_terms: int):
     print("Final approximation", current_approx)
 
 
-# iterates until the error for that iteration is lower than 10^tolerance_exponent
-# tolerance_exponent should be a negative integer for best results, ie -12
 def error_tolerance(x: int, tolerance_exponent: int):
-    current_approx = 0
-    series_term_generator = e_x_nthterm_gen(x)
-    n = 0
-    firstLoop = True
-
-    while firstLoop or approx_error > 10**tolerance_exponent:
-        last_approx = current_approx
-        current_approx += next(series_term_generator)
-        approx_error = (current_approx - last_approx)/current_approx
-
-        if firstLoop:
-            firstLoop = False
-
-        n += 1
-
-    print("Numterms used:", n)
-    print("Final approximation", current_approx)
+    def _error_tolerance_tail_rec(series_terms, cumulative_sum, errors, n):
+        if series_terms and errors[-1] < 10**tolerance_exponent:
+            return series_terms, cumulative_sum, errors
+        return _error_tolerance_tail_rec((new_series_terms := series_terms+[(current_term := e_x_nthterm(x)(n))]),
+                                         (new_cum_sum := cumulative_sum+[
+                                          cumulative_sum[-1]+current_term] if cumulative_sum else [current_term]),
+                                         errors +
+                                         [new_series_terms[-1]/new_cum_sum[-1]],
+                                         n+1)
+    return _error_tolerance_tail_rec([], [], [], 0)
 
 
 if __name__ == "__main__":
-    #fixed_num_terms(10,40)
+    # fixed_num_terms(10,40)
 
-    error_tolerance(10, -16)
+    #list(map(lambda tuple: print(tuple[-1]), fixed_num_map(10, 40)))
+
+    list(map(lambda tuple: print(tuple[-1]),
+         error_tolerance(10, -16)))
