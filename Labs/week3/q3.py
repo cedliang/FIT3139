@@ -1,3 +1,4 @@
+from random import gauss
 import numpy as np
 from scipy.linalg import lu
 
@@ -35,21 +36,29 @@ def forward_elimination(a: np.ndarray, b: np.ndarray):
 
     def _forward_elimination(a: np.ndarray, b: np.ndarray, n: int):
         e_mat = generate_elim_matrix(a, n)
-        return (np.dot(e_mat, a), np.dot(e_mat, b)) if n != len(b) - 1 else _forward_elimination(np.dot(e_mat, a), np.dot(e_mat, b), n+1)
+        return (np.dot(e_mat, a), np.dot(e_mat, b)) if n == len(b) - 1 else _forward_elimination(np.dot(e_mat, a), np.dot(e_mat, b), n+1)
 
     return _forward_elimination(a, b, 0)
 
+def gaussian_elimination(a, b):
+    u, z = forward_elimination(a, b)
+    return back_substitution(u, z)
 
 if __name__ == "__main__":
-    upper_triangular = np.array([[1, 2, 2], [0, -4, -6], [0, 0, -1]])
-    z = np.array([3, -6, -2])
+    # upper_triangular = np.array([[1, 2, 2], [0, -4, -6], [0, 0, -1]])
+    # z = np.array([3, -6, -2])
+    # print("Np answer:\n", np.linalg.solve(upper_triangular, z))
+    # print("My answer:\n", back_substitution(upper_triangular, z))
 
-    print("Np answer:\n", np.linalg.solve(upper_triangular, z))
-    print("My answer:\n", back_substitution(upper_triangular, z))
+    # print("Forward elimination:")
+    # a = np.array([[1, 2, 2], [4, 4, 2], [4, 6, 4]])
+    # b = np.array([3, 6, 10])
+    # u, z = forward_elimination(a, b)
+    # print("u\n", u)
+    # print("z\n", z)
 
-    print("Forward elimination:")
     a = np.array([[1, 2, 2], [4, 4, 2], [4, 6, 4]])
     b = np.array([3, 6, 10])
-    u, z = forward_elimination(a, b)
-    print("u\n", u)
-    print("z\n", z)
+    print("Gaussian elimination:")
+    print("My answer:\n", gaussian_elimination(a, b))
+    print("Np answer\n", np.linalg.solve(a, b))
