@@ -9,6 +9,7 @@ numpy = "*"
 jupyter = "*"
 jupyterlab = "*"
 jupyterlab-git = "*"
+scipy = "*"
 
 [dev-packages]
 autopep8 = "*"
