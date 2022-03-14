@@ -39,6 +39,11 @@ def forward_elimination(a: np.ndarray, b: np.ndarray):
     return _forward_elimination(a, b, 0, [])
 
 
+def generate_elimination_matrices(a, b):
+    u, z, e_mats = forward_elimination(a, b)
+    return e_mats
+
+
 def gaussian_elimination(a, b):
     u, z, e_mats = forward_elimination(a, b)
     return back_substitution(u, z)
