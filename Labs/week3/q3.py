@@ -1,6 +1,4 @@
-from random import gauss
 import numpy as np
-from scipy.linalg import lu
 
 
 def back_substitution(u: np.ndarray, z: np.ndarray):
@@ -34,15 +32,17 @@ def forward_elimination(a: np.ndarray, b: np.ndarray):
         ident[:, n] = elim_matrix_nth_column
         return ident
 
-    def _forward_elimination(a: np.ndarray, b: np.ndarray, n: int):
+    def _forward_elimination(a: np.ndarray, b: np.ndarray, n: int, e_mats: list):
         e_mat = generate_elim_matrix(a, n)
-        return (np.dot(e_mat, a), np.dot(e_mat, b)) if n == len(b) - 1 else _forward_elimination(np.dot(e_mat, a), np.dot(e_mat, b), n+1)
+        return (np.dot(e_mat, a), np.dot(e_mat, b), e_mats + [e_mat]) if n == len(b) - 1 else _forward_elimination(np.dot(e_mat, a), np.dot(e_mat, b), n+1, e_mats + [e_mat])
 
-    return _forward_elimination(a, b, 0)
+    return _forward_elimination(a, b, 0, [])
+
 
 def gaussian_elimination(a, b):
-    u, z = forward_elimination(a, b)
+    u, z, e_mats = forward_elimination(a, b)
     return back_substitution(u, z)
+
 
 if __name__ == "__main__":
     # upper_triangular = np.array([[1, 2, 2], [0, -4, -6], [0, 0, -1]])
@@ -53,9 +53,10 @@ if __name__ == "__main__":
     # print("Forward elimination:")
     # a = np.array([[1, 2, 2], [4, 4, 2], [4, 6, 4]])
     # b = np.array([3, 6, 10])
-    # u, z = forward_elimination(a, b)
+    # u, z, e_mats = forward_elimination(a, b)
     # print("u\n", u)
     # print("z\n", z)
+    # print("intermediary elimination matrices\n", e_mats)
 
     a = np.array([[1, 2, 2], [4, 4, 2], [4, 6, 4]])
     b = np.array([3, 6, 10])
