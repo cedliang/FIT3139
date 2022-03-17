@@ -19,12 +19,9 @@ def swaps_col_i(a, b, i, moved_pivot_indices: list):
         p[swap_index] = np.array(row_swap)
 
     return p, np.dot(p, a), np.dot(p, b), moved_pivot_indices + [i]
-    # return p, pa, pb, swapped_rows
-    # moved_to_pivot is a list of rows that should not be touched - rows moved to the diagonal in previous iterations.
 
 
-#add intermediate swapping
-def forward_elimination(a: np.ndarray, b: np.ndarray):
+def forward_elimination_with_swapping(a: np.ndarray, b: np.ndarray):
     def generate_elim_matrix(a: np.ndarray, n: int):
         def column_value(pivot_value):
             def g(current_index, current_value):
@@ -47,25 +44,25 @@ def forward_elimination(a: np.ndarray, b: np.ndarray):
         e_mat = generate_elim_matrix(pa, n)
         return (np.dot(e_mat, pa), np.dot(e_mat, pb), e_mats + [e_mat], new_swapped_rows, ps + [p]) if n == len(b) - 1 else _forward_elimination(np.dot(e_mat, pa), np.dot(e_mat, pb), n+1, e_mats + [e_mat], new_swapped_rows, ps+[p])
 
-    return _forward_elimination(a, b, 0, [], [], [])
+    u, z, e_mats, swapped_rows, ps = _forward_elimination(a, b, 0, [], [], [])
+
+    return u, z, e_mats, ps
 
 
 def print_elems_newline(iterable):
     list(map(print, iterable))
 
+
 if __name__ == "__main__":
     a = np.array([[1, 2, 2], [4, 4, 2], [4, 6, 4]])
     b = np.array([3, 6, 10])
 
-    pa, pb, e_mats, swapped_rows, ps = forward_elimination(a, b)
+    u, z, e_mats, ps = forward_elimination_with_swapping(a, b)
 
-    print("pa\n",pa,"\npb\n", pb)
+    print("u\n", u, "\nz\n", z)
 
     print("elimination matrices")
     print_elems_newline(e_mats)
-
-    print("swapped rows")
-    print_elems_newline(swapped_rows)
 
     print("permutation matrices")
     print_elems_newline(ps)
