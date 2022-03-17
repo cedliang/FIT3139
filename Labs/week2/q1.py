@@ -9,17 +9,16 @@ def composeBin(powers_list: list[list[int, int]]):
     if (appendZeros := powers_list[-1][0]) > 0:
         return returnstr+appendZeros*"0"
     if (powers_list[0][0]) < 0:
-        return "0."+returnstr
+        return f"0.{returnstr}"
     return returnstr
 
 
 def toBinAux(currentexp: int, currentn: int, current_powerslist: list[list[int, int]]):
     if currentexp == -16 or currentn == 0:
         return currentexp, currentn, current_powerslist
-    else:
-        if currentn >= 2**currentexp:
-            return toBinAux(currentexp-1, currentn - 2**currentexp, current_powerslist+[[currentexp, 1]])
-        return toBinAux(currentexp-1, currentn, current_powerslist+[[currentexp, 0]])
+    if currentn >= 2**currentexp:
+        return toBinAux(currentexp-1, currentn - 2**currentexp, current_powerslist+[[currentexp, 1]])
+    return toBinAux(currentexp-1, currentn, current_powerslist+[[currentexp, 0]])
 
 
 def toBin(real_n: float):

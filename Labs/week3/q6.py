@@ -8,15 +8,14 @@ def swaps_col_i(a, b, i, moved_pivot_indices: list):
 
     if swap_index == i:
         return np.identity(len(column_i)), a, b, moved_pivot_indices
-    else:
-        p = np.identity(len(column_i))
+    p = np.identity(len(column_i))
 
-        row_i = [0]*len(column_i)
-        row_i[swap_index] = 1
-        p[i] = np.array(row_i)
-        row_swap = [0]*len(column_i)
-        row_swap[i] = 1
-        p[swap_index] = np.array(row_swap)
+    row_i = [0]*len(column_i)
+    row_i[swap_index] = 1
+    p[i] = np.array(row_i)
+    row_swap = [0]*len(column_i)
+    row_swap[i] = 1
+    p[swap_index] = np.array(row_swap)
 
     return p, np.dot(p, a), np.dot(p, b), moved_pivot_indices + [i]
 
