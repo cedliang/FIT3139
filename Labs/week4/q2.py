@@ -14,7 +14,7 @@ def jacobi_method(a: np.ndarray, b: np.ndarray, error_targ: float = 10**-12):
         new_x_vec = np.array(list(map(x_value, range(len(x_vec)))))
         abs_error = abs(np.linalg.norm(x_vec) - np.linalg.norm(new_x_vec))
 
-        return "Does not converge" if (len(abs_errors) > 100 and abs_error > abs_errors[-50]) or n >= 500 else x_vec if abs_error < error_targ else _jacobi_method(new_x_vec, n+1, abs_errors + [abs_error])
+        return "Does not converge" if (len(abs_errors) > 20 and np.mean(abs_errors[-10:]) > np.mean(abs_errors[-20:-10])) or n >= 500 else x_vec if abs_error < error_targ else _jacobi_method(new_x_vec, n+1, abs_errors + [abs_error])
 
     return _jacobi_method(np.array([0]*len(b)), 0, [])
 
@@ -31,7 +31,7 @@ def gs_method(a: np.ndarray, b: np.ndarray, error_targ: float = 10**-12):
         new_x_vec = calc_x_vec([], 0)
         abs_error = abs(np.linalg.norm(x_vec) - np.linalg.norm(new_x_vec))
 
-        return "Does not converge" if (len(abs_errors) > 100 and abs_error > abs_errors[-50]) or n >= 500 else x_vec if abs_error < error_targ else _gs_method(new_x_vec, n+1, abs_errors + [abs_error])
+        return "Does not converge" if (len(abs_errors) > 20 and np.mean(abs_errors[-10:]) > np.mean(abs_errors[-20:-10])) or n >= 500 else x_vec if abs_error < error_targ else _gs_method(new_x_vec, n+1, abs_errors + [abs_error])
 
     return _gs_method(np.array([0]*len(b)), 0, [])
 

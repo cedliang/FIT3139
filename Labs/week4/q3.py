@@ -2,10 +2,13 @@
 import numpy as np
 from q2 import gs_method, jacobi_method
 import random
+import multiprocessing
+import itertools
+
 
 def generate_problem(size):
     x = np.array([random.uniform(-50, 50) for _ in range(size)])
-    
+
     a = np.random.randint(-50, 50, (size, size))
     while 0 in np.diagonal(a):
         a = np.random.randint(-50, 50, (size, size))
@@ -13,24 +16,39 @@ def generate_problem(size):
     b = np.dot(a, x)
     return a, x, b
 
-def sample_problem(size, num_samples=100):
-    def sample_single():
-        a, x, b = generate_problem(size)
-        return not isinstance(jacobi_method(a, b), str), not isinstance(gs_method(a, b), str)
 
-    samples = [sample_single() for _ in range(num_samples)]
-    j_conv = sum([sample[0] for sample in samples])/len(samples)
-    gs_conv = sum([sample[1] for sample in samples])/len(samples)
-    return j_conv, gs_conv
+def check_convergence(prob_tuple):
+    method = jacobi_method if prob_tuple[1] == "j" else gs_method
+    return not isinstance(method(prob_tuple[2], prob_tuple[4]), str)
+
+
+def generate_problems(sizes: range, num_samples: int):
+    problems = []
+
+    for size, _ in itertools.product(sizes, range(num_samples)):
+        a, x, b = generate_problem(size)
+        problems.extend(((size, "j", a, x, b), (size, "g", a, x, b)))
+    return problems
+
 
 if __name__ == "__main__":
-    size_range = range(2, 6)
-    num_samples = 1000
 
-    results = []
-    for i in size_range:
-        j_conv, gs_conv = sample_problem(i, num_samples)
-        results.append((i, j_conv, gs_conv))
+    size_range = range(2, 8)
+    num_samples = 10000
 
-    for i, j_conv, gs_conv in results:
-        print(f"\nSize {i} matrices:\nj_conv: {j_conv}\ngs_conv: {gs_conv}\n")
+    problems = generate_problems(size_range, num_samples)
+
+    with multiprocessing.Pool() as pool:
+        results = pool.map(check_convergence, problems)
+
+    zip_res = list(zip(problems, results))
+
+    counts = {size: [0, 0] for size in size_range}
+
+    for elem in zip_res:
+        counts[elem[0][0]][0 if elem[0][1] == "j" else 1] += int(elem[1])
+
+    for count in counts.values():
+        count[0], count[1] = count[0]/num_samples, count[1]/num_samples
+
+    print(counts)
