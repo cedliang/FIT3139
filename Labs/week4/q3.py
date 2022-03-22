@@ -1,4 +1,3 @@
-
 import numpy as np
 from q2 import gs_method, jacobi_method
 import random
@@ -52,3 +51,6 @@ if __name__ == "__main__":
         count[0], count[1] = count[0]/num_samples, count[1]/num_samples
 
     print(counts)
+
+    # running with num samples 1000000 yielded (took about 30 minutes)
+    # {2: [0.478348, 0.493903], 3: [0.110999, 0.18196], 4: [0.015594, 0.044308], 5: [0.001086, 0.006538], 6: [4.3e-05, 0.00062], 7: [1e-06, 2.6e-05]}
