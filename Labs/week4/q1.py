@@ -10,7 +10,7 @@ def gen_terms(num_terms: int):
 
 
 if __name__ == "__main__":
-    max_k = 2
+    max_k = 100
 
     x = list(range(max_k + 1)) if max_k > 1 else [0, 1]
     y = gen_terms(max_k)
