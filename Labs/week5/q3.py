@@ -2,7 +2,6 @@ import numpy as np
 import itertools
 
 
-
 # selects the relevant lambda from the lambda function array based on an index and applies it, returning a single value in f(x) or j(x)
 # nested lambdas to ensure lazy evaluation - select the function from the array and apply it, instead of selecting computed values from a full map
 fmat_apply = lambda fmat: lambda *xs: lambda idx: fmat[idx](*xs)
@@ -11,8 +10,8 @@ jfmat_apply = lambda jfmat: lambda *xs: lambda idx0, idx1: jfmat[idx0][idx1](*xs
 
 # maps the application over all the elems in x, computing f(x) and j(x)
 fx = lambda fmat, x: list(map(fmat_apply(fmat)(*x), range(len(x))))
-jfx = lambda jfmat, x: [list(map(lambda idxtup: jfmat_apply(jfmat)(
-    *x)(*idxtup), itertools.product(range(len(x)), range(len(x)))))[i:i+len(x)] for i in range(0, len(x)**2, len(x))]
+jfx = lambda jfmat, x: [list(map(lambda idxtup: jfmat_apply(jfmat)(*x)(*idxtup), 
+        itertools.product(range(len(x)), range(len(x)))))[i:i+len(x)] for i in range(0, len(x)**2, len(x))]
 
 
 def multi_newtons(fmat, jfmat, init, tol=10**-9, max_iter=800):
