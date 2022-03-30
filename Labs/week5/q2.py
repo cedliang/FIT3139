@@ -36,3 +36,8 @@ if __name__ == "__main__":
     print(find_root_secant(e_f, (2, 3)))
     print(find_root_secant(t_f, (2, 3)))
     print(find_root_secant(p_f2, (2, 3)))
+
+    f_fuelrod = lambda x: (1/np.tan(x))-((x**2 - 1)/(2*x))
+    print("\nFuelrod")
+    solutions = list(map(lambda n: find_root_secant(f_fuelrod, (2, n))[0], range(3, 100)))
+    print(min(filter(lambda root: root>0, solutions)))
