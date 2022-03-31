@@ -7,11 +7,7 @@ def model(a, K, N0, funct):
     k = 0
     Nk = N0
     while True:
-        if k == 0:
-            yield N0
-        else:
-            Nk = funct(a, K)(Nk)
-            yield Nk
+        yield N0 if k == 0 else (Nk := funct(a, K)(Nk))
         k += 1
 
 
