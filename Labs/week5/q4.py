@@ -32,18 +32,19 @@ if __name__ == "__main__":
     num_gens = 200
     K = 1000
     N0 = 100
-    a_vals = [1, 1.98, 2, 2.55]
+    a_vals = [1, 1.98, 2, 2.55, 2.8]
     pops = {a: list(itertools.islice(model(a, K, N0, funct), num_gens))
             for a in a_vals}
 
-    for a, populations in pops.items():
-        plt.plot(list(range(num_gens)), populations, label=f"a = {a}")
 
-    plt.legend()
-    plt.show()
+    if plot_timewise := [1, 1.98, 2, 2.55, 2.8]:
+        for a in plot_timewise:
+            plt.plot(list(range(num_gens)), pops[a], label=f"a = {a}")
+        plt.legend()
+        plt.show()
 
-    #no oscillation, convergent oscillation, oscillation between two values, oscillation between four values
 
-    for a, populations in pops.items():
-        gen_cobweb_plot(funct(a, K), populations, show=False)
-    plt.show()
+    if plot_cobwebs := [2.55, 1.98]:
+        for a in plot_cobwebs:
+            gen_cobweb_plot(funct(a, K), pops[a], show=False)
+        plt.show()
