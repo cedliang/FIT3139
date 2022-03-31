@@ -1,5 +1,3 @@
-import matplotlib.pyplot as plt
-import numpy as np
 import itertools
 from q4 import gen_cobweb_plot
 
