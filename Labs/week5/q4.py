@@ -16,12 +16,10 @@ def model(a, K, N0, funct):
 
 
 def gen_cobweb_plot(function, pop, show=True):
-    pop_p = []
-    pop_pplus = []
-    for i in range(1, len(pop)):
-        pop_p += [pop[i-1], pop[i-1]]
-        pop_pplus += [pop[i-1], pop[i]]  
+    def __gen_doubled_list(pop_inner):
+        return [pop_inner[0]]*2 if len(pop_inner) == 1 else [pop_inner[0]]*2 + __gen_doubled_list(pop_inner[1:])
 
+    pop_p, pop_pplus = (doubled_list := __gen_doubled_list(pop))[:-2], doubled_list[1:-1]
     domain_linspace = np.linspace(min(pop), max(pop), 1000)
 
     plt.plot(domain_linspace, list(map(function, domain_linspace)))
@@ -39,7 +37,8 @@ if __name__ == "__main__":
     K = 1000
     N0 = 100
     a_vals = [1, 1.98, 2, 2.55]
-    pops = {a:list(itertools.islice(model(a, K, N0, funct), num_gens)) for a in a_vals}
+    pops = {a: list(itertools.islice(model(a, K, N0, funct), num_gens))
+            for a in a_vals}
 
     for a, populations in pops.items():
         plt.plot(list(range(num_gens)), populations, label=f"a = {a}")
@@ -49,7 +48,6 @@ if __name__ == "__main__":
 
     #no oscillation, convergent oscillation, oscillation between two values, oscillation between four values
 
-
-    # for a, populations in pops.items():
-    #     gen_cobweb_plot(funct(a, K), populations, show=False)
-    # plt.show()
+    for a, populations in pops.items():
+        gen_cobweb_plot(funct(a, K), populations, show=False)
+    plt.show()
