@@ -16,6 +16,30 @@ class ArrayFloat:
     def __add__(self, other):
         return ArrayFloat(self.to_str(self.add_floats(self.repr_array, other.repr_array)))
 
+    def __sub__(self, other):
+        return ArrayFloat(self.to_str(self.add_floats(self.repr_array, (ArrayFloat("-1")*other).repr_array)))
+
+    def __eq__(self, other):
+        return self.repr_array == other.repr_array
+
+    def __lt__(self, other):
+        return self.repr_array != other.repr_array and (self - other).repr_array[0] == '-'
+
+    def __gt__(self, other):
+        return self.repr_array != other.repr_array and (self - other).repr_array[0] == '+'
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __ge__(self, other):
+        return self == other or self > other
+
+    def __le__(self, other):
+        return self == other or self < other
+
+    def abs(self):
+        return ArrayFloat((ArrayFloat(-1)*self).__str__()) if self < ArrayFloat(0) else self
+
     def from_str(self, dec_str):
         if dec_str[0] not in ["-", "+"]:
             dec_str = f"+{dec_str}"
@@ -184,17 +208,47 @@ class ArrayFloat:
         # add decimals back in
         if num_decs >= len(reduced_list):
             zeros_pad = max(0, num_decs - len(reduced_list))
-            return self.from_str(self.to_str([final_sign, [], [0]*zeros_pad + reduced_list]))
+            r_string = self.to_str(
+                [final_sign, [], [0]*zeros_pad + reduced_list])
 
-        if num_decs == 0:
-            return self.from_str(self.to_str([final_sign, reduced_list, []]))
+        elif num_decs == 0:
+            r_string = self.to_str([final_sign, reduced_list, []])
 
-        return self.from_str(self.to_str([final_sign, reduced_list[:-num_decs], reduced_list[-num_decs:]]))
+        else:
+            r_string = self.to_str(
+                [final_sign, reduced_list[:-num_decs], reduced_list[-num_decs:]])
+
+        if len(r_string) > 100:
+            r_string = r_string[:100]
+
+        return self.from_str(r_string)
+
+
+def find_root_newton(new_x_func, init, tol=10**-50, max_iter=500):
+    def __recurse_newton(x, n):
+        new_x = x - new_x_func(x)
+
+        print(new_x)
+        return "Does not converge" if n >= max_iter else (new_x, n) if (new_x - x).abs() < tol else __recurse_newton(new_x, n+1)
+
+    return __recurse_newton(init, 0)
 
 
 if __name__ == "__main__":
-    a = ArrayFloat("3.1415926565897932384626")
-    b = ArrayFloat("2.7182818284590452353602")
+    # a = ArrayFloat("3.1415926565897932384626")
+    # b = ArrayFloat("2.7182818284590452353602")
 
-    print(a + b)
-    print(a * b)
+    # print(a + b)
+    # print(a * b)
+
+    # 1d
+    # derived from x - f(x)/f'(x)
+    def new_x_func(x): return (x*x*x) - ArrayFloat(0.5)*x
+    ten_power_fifty = ArrayFloat(
+        "0.000000000000000000000000000000000000000000000000001")
+
+    print(find_root_newton(new_x_func, ArrayFloat(0.5), ten_power_fifty)[0])
+
+    # for a convergent case, we expect the difference between one iteration to the next to decrease over iterations.
+    # if the magnitude of the difference between iterations has reached the level of 10^50, then we would not expect
+    # following iterations to have enough of an impact on the estimation to deviate it from that value.
