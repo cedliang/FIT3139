@@ -1,7 +1,9 @@
 import copy
 import itertools
 import functools
-
+from unicodedata import numeric
+from unittest import result
+import numpy as np
 
 class ArrayFloat:
     def __init__(self, initStr):
@@ -77,7 +79,7 @@ class ArrayFloat:
         if not n_copy[1]:
             n_copy[1].append("0")
         dec_point = "." if n_copy[2] else ""
-        sign = "" if n_copy[0] == "+" else "-"
+        sign = n_copy[0]
         stringified = list(
             map(str, [sign] + n_copy[1] + [dec_point] + n_copy[2]))
         return "".join(stringified)
@@ -234,6 +236,232 @@ def find_root_newton(new_x_func, init, tol=10**-50, max_iter=500):
     return __recurse_newton(init, 0)
 
 
+
+
+
+
+
+
+class OptimisedArrayFloat:
+    def __init__(self, dec_str, direct_constructor = None, precision = 20):
+        self.precision = precision
+
+        self.array, self.exponent, self.sign = direct_constructor or self.from_str(dec_str)
+
+    # rounding error exists only for the shorthand string representation
+    def __str__(self):
+        return self.sign + str(int("".join(map(str, self.array))) * 10 ** self.exponent) if self.array else "0."
+
+    def __repr__(self):
+        return self.sign + str(int("".join(map(str, self.array))) * 10 ** self.exponent) if self.array else "0."
+
+    def from_str(self, dec_str: str) -> list:
+        if dec_str[0] not in ["-", "+"]:
+            sign = "+"
+        else:
+            sign = dec_str[0]
+            dec_str = dec_str[1:]
+
+        if "." not in dec_str:
+            dec_str += "."
+
+        #remove leading and trailing zeros
+        nonzero_elems_filt = list(filter(lambda char: char != "0", dec_str))
+
+        first_nonzero_index = dec_str.index(nonzero_elems_filt[0])
+        last_nonzero_index = len(dec_str) - 1 - dec_str[::-1].index("".join(nonzero_elems_filt)[-1])
+
+        dec_str = dec_str[first_nonzero_index:last_nonzero_index+1]
+
+        # these operations actually change the number's meaning - so need to track changes with exponent
+        exponent = 0
+
+        # first move decimal point to the rightmost
+        num_dig_after_dec = len(dec_str) - dec_str.index(".") - 1
+
+        dec_str = dec_str.replace(".", "") + "."
+        exponent = -num_dig_after_dec
+
+        # remove leading zeros
+        first_nonzero_index = dec_str.index(next(iter(filter(lambda char: char != "0", dec_str))))
+        dec_str = dec_str[first_nonzero_index:]
+
+        # then move it left until you get a nonzero
+        if dec_str != ".":
+            while dec_str[dec_str.index(".") - 1] == "0":
+                dec_str = dec_str.replace("0.", ".0")
+                exponent += 1
+
+        #remove trailing zeros
+        last_nonzero_index = len(dec_str) - 1 - dec_str[::-1].index("".join(list(filter(lambda char: char != "0", dec_str)))[-1])
+        dec_str = dec_str[:last_nonzero_index+1]
+
+        # make array
+        digs_array = list(map(int, dec_str[:-1]))
+
+        if not digs_array:
+            sign = "+"
+
+        # truncate to precision limit
+        if len(digs_array) > self.precision:
+            truncated_digs = len(digs_array) - self.precision
+            digs_array = digs_array[:self.precision]
+            exponent += truncated_digs
+
+            # remove trailing zeros from list again to reduce computation time needed for operations
+            last_nonzero_index = np.max(np.nonzero(digs_array))
+            before_len = len(digs_array)
+            digs_array = digs_array[:last_nonzero_index + 1]
+            exponent += before_len - len(digs_array) 
+
+        return digs_array, exponent, sign
+
+    def __eq__(self, other):
+        if self.array or other.array:
+            return self.array == other.array and self.exponent == other.exponent and self.sign == other.sign
+        else:
+            return True
+
+    def __lt__(self, other):
+        if self == other:
+            return False
+        if self.sign != other.sign:
+            if self.sign == "-":
+                return True
+            else:
+                return False
+        
+        if self.array == []:
+            return other.sign == "+" and bool(other.array)
+        if other.array == []:
+            return self.sign == "-" and bool(self.array)
+
+        def recursive_array_compare(a1, a2, e1, e2):
+            a1_dig_exp = len(a1) - 1 + e1
+            a2_dig_exp = len(a2) - 1 + e2
+
+            if not a1:
+                return True
+            if not a2:
+                return False
+            if a1_dig_exp < a2_dig_exp:
+                return True
+            if a2_dig_exp < a1_dig_exp:
+                return False
+            if a1[0] < a2[0]:
+                return True
+            if a1[0] > a2[0]:
+                return False
+
+            # same dig - recurse
+            a1.pop(0)
+            a2.pop(0)
+
+            return recursive_array_compare(a1, a2, e1, e2)
+
+        rac = recursive_array_compare(self.array, other.array, self.exponent, other.exponent)
+        return rac if self.sign != "-" else not rac
+
+    def __le__(self, other):
+        return self == other or self < other
+
+    def __ge__(self, other):
+        return not self < other
+    
+    def __gt__(self, other):
+        return not self < other and self != other
+
+    def abs(self):
+        return OptimisedArrayFloat("", direct_constructor = (self.array, self.exponent, "+"), precision = self.precision)
+
+    def neg(self):
+        return OptimisedArrayFloat("", direct_constructor = (self.array, self.exponent, "+" if self.sign == "-" else "-"), precision=self.precision)
+
+    def add_vals(self, other):
+        def add_procedure(a1, a2):
+            total_digits = len(a1)
+            output_array = [None]*total_digits
+            acc = 0
+            for i in range(total_digits-1, -1, -1):
+                sum_digs = a1[i] + a2[i] + acc
+                acc = 0
+                if sum_digs >= 10:
+                    sum_digs -= 10
+                    acc = 1
+                output_array[i] = sum_digs
+
+            return [acc] + output_array if acc else output_array
+
+        def sub_procedure(a1, a2):
+            total_digits = len(a1)
+            output_array = [None]*total_digits
+            acc = 0
+            for i in range(total_digits - 1, -1, -1):
+                diff_digs = a1[i] - a2[i] - acc
+                acc = 0
+                if diff_digs < 0:
+                    diff_digs += 10
+                    acc = 1
+                output_array[i] = diff_digs
+
+            return output_array
+
+        def gen_adjust_mag_array(array, min_exponent, common_exponent):
+            # fully contained
+            if common_exponent <= min_exponent:
+                return array + [0]*(min_exponent - common_exponent)
+
+            number_discard = common_exponent - min_exponent
+            if number_discard >= len(array):
+                return []
+            
+            return array[:-number_discard]
+            
+        mag_range_self = (len(self.array) - 1 + self.exponent, self.exponent)
+        mag_range_other = (len(other.array) - 1 + other.exponent, other.exponent)
+
+        # range of magnitudes for which we care about calculating
+        mag_range_overlap = (max(mag_range_self[0], mag_range_other[0]), max(min(mag_range_self[1], mag_range_other[1]), max(mag_range_self[0], mag_range_other[0]) - self.precision))
+
+        # standardise these arrays for the range of magnitudes we care about
+        common_exponent = mag_range_overlap[1]
+
+        # if a value's mag range is completely enclosed by the range (ie if the common exponent is <= min_mag_range of value)
+        adjusted_self = gen_adjust_mag_array(self.array, self.exponent, common_exponent)
+        adjusted_other = gen_adjust_mag_array(other.array, other.exponent, common_exponent)
+
+        #fill with zeros
+        adjusted_self = [0]*(max(len(adjusted_self), len(adjusted_other)) - len(adjusted_self)) + adjusted_self
+        adjusted_other = [0]*(max(len(adjusted_self), len(adjusted_other)) - len(adjusted_other)) + adjusted_other
+
+        if self.sign == other.sign:
+            result_sign = self.sign
+            procedure_result_array = add_procedure(adjusted_self, adjusted_other)
+
+        else:
+            # subtract smaller abs value from bigger abs value - and flip the sign if they don't match up 
+            self_abs_greater = self.abs() > other.abs()
+            result_sign = "+"
+            if (self_abs_greater and self.sign == "-") or (not self_abs_greater and self.sign == "+"):
+                result_sign = "-"
+
+            procedure_result_array = sub_procedure(adjusted_self, adjusted_other) if self_abs_greater else sub_procedure(adjusted_other, adjusted_self)
+
+        if common_exponent < 0:
+            procedure_result_array.insert(common_exponent, ".")
+        elif common_exponent > 0:
+            procedure_result_array += [0]*common_exponent
+
+        result_str = result_sign + "".join(map(str, procedure_result_array))
+        return OptimisedArrayFloat(result_str, precision=self.precision)
+
+    def __add__(self, other):
+        return self.add_vals(other)
+
+    def __sub__(self, other):
+        return self.add_vals(other.neg())
+
+
 if __name__ == "__main__":
     # a = ArrayFloat("3.1415926565897932384626")
     # b = ArrayFloat("2.7182818284590452353602")
@@ -243,12 +471,26 @@ if __name__ == "__main__":
 
     # 1d
     # derived from x - f(x)/f'(x)
-    def new_x_func(x): return (x*x*x) - ArrayFloat(0.5)*x
-    ten_power_fifty = ArrayFloat(
-        "0.000000000000000000000000000000000000000000000000001")
+    # def new_x_func(x): return (x*x*x) - ArrayFloat(0.5)*x
+    # ten_power_fifty = ArrayFloat(
+    #     "0.000000000000000000000000000000000000000000000000001")
 
-    print(find_root_newton(new_x_func, ArrayFloat(0.5), ten_power_fifty)[0])
+    # print(find_root_newton(new_x_func, ArrayFloat(0.5), ten_power_fifty)[0])
 
     # for a convergent case, we expect the difference between one iteration to the next to decrease over iterations.
     # if the magnitude of the difference between iterations has reached the level of 10^50, then we would not expect
     # following iterations to have enough of an impact on the estimation to deviate it from that value.
+
+
+
+    #for the last question, reimplement in terms of ordered powers of 10 - but ensuring that null elements are discarded.
+
+    # test_values = ["1.23016700", "5", "100.000", "-0.0001", "0", "-.", "1.00000100000000000000000000001"]
+
+    # print(list(map(OptimisedArrayFloat, test_values)))
+
+
+    a = OptimisedArrayFloat("3.1415926565897932384626")
+    b = OptimisedArrayFloat("2.7182818284590452353602")
+
+    print(a - b)
