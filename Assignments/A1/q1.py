@@ -3,16 +3,7 @@ import itertools
 import functools
 import numpy as np
 import operator
-
-
-def find_root_newton(new_x_func, init, tol, max_iter=500):
-    def __recurse_newton(x, n):
-        new_x = x - new_x_func(x)
-
-        print(new_x)
-        return "Does not converge" if n >= max_iter else (new_x, n) if new_x_func(x).abs() < tol else __recurse_newton(new_x, n+1)
-
-    return __recurse_newton(init, 0)
+from multiprocess import Pool
 
 
 class ArrayFloat:
@@ -30,7 +21,7 @@ class ArrayFloat:
                   [([], 0), ([6], 0), ([1, 2], 0), ([1, 8], 0), ([2, 4], 0),
                    ([3], 1), ([3, 6], 0), ([4, 2], 0), ([4, 8], 0), ([5, 4], 0)],
                   [([], 0), ([7], 0), ([1, 4], 0), ([2, 1], 0), ([2, 8], 0), ([
-                      3, 5], 0), ([4, 2], 0), ([4, 9], 0), ([5, 4], 0), ([6, 3], 0)],
+                      3, 5], 0), ([4, 2], 0), ([4, 9], 0), ([5, 6], 0), ([6, 3], 0)],
                   [([], 0), ([8], 0), ([1, 6], 0), ([2, 4], 0), ([3, 2], 0),
                    ([4], 1), ([4, 8], 0), ([5, 6], 0), ([6, 4], 0), ([7, 2], 0)],
                   [([], 0), ([9], 0), ([1, 8], 0), ([2, 7], 0), ([3, 6], 0), ([4, 5], 0), ([5, 4], 0), ([6, 3], 0), ([7, 2], 0), ([8, 1], 0)]]
@@ -43,14 +34,7 @@ class ArrayFloat:
 
     # rounding error exists only for the shorthand string representation
     def __str__(self):
-        working_array = copy.deepcopy(self.array)
-
-        if self.exponent < 0:
-            working_array.insert(self.exponent, ".")
-        elif self.exponent > 0:
-            working_array += [0]*self.exponent
-
-        return self.sign + "".join(map(str, working_array))
+        return self.sign + str(int("".join(map(str, self.array))) * 10 ** self.exponent) if self.array else "0."
 
     def __repr__(self):
         return self.sign + str(int("".join(map(str, self.array))) * 10 ** self.exponent) if self.array else "0."
@@ -163,7 +147,7 @@ class ArrayFloat:
             return recursive_array_compare(a1, a2, e1, e2)
 
         rac = recursive_array_compare(
-            self.array, other.array, self.exponent, other.exponent)
+            copy.deepcopy(self.array), copy.deepcopy(other.array), self.exponent, other.exponent)
         return rac if self.sign != "-" else not rac
 
     def __le__(self, other):
@@ -309,9 +293,59 @@ class ArrayFloat:
 
         product_sums = list(map(lambda tup: get_digit_prod(
             tup[0][0], tup[1][0], tup[0][1] + tup[1][1]), removed_zeros))
+
         summed = functools.reduce(operator.add, product_sums)
 
         return ArrayFloat("", direct_constructor=(summed.array, summed.exponent, final_sign), precision=self.precision)
+
+
+def find_root_newton(new_x_func, init, tol, max_iter=500):
+    def __recurse_newton(x, n):
+        new_x = x - new_x_func(x)
+
+        print(new_x)
+        return "Does not converge" if n >= max_iter else (new_x, n) if new_x_func(x).abs() < tol else __recurse_newton(new_x, n+1)
+
+    return __recurse_newton(init, 0)
+
+
+def mod_coeffs_third_term(k, mod=True):
+    mod_amt = 10 ** k if mod else 0
+    return list(map(lambda i: ArrayFloat(i, precision=50), map(str, [
+        1,
+        -210,
+        20615 + mod_amt,
+        -1256850,
+        53327946,
+        -1672280820,
+        40171771630,
+        -756111184500,
+        11310276995381,
+        -135585182899530,
+        1307535010540395,
+        -10142299865511450,
+        63030812099294896,
+        -311333643161390640,
+        1206647803780373360,
+        -3599979517947607200,
+        8037811822645051776,
+        -12870931245150988800,
+        13803759753640704000,
+        -8752948036761600000,
+        2432902008176640000])))
+
+
+def crazy_func(k, mod=False):
+    def f(x):
+        elems_list = []
+        for idx, power in enumerate(range(20, -1, -1)):
+            x_arr = [x]*power
+            x_power = (functools.reduce(operator.mul, x_arr,
+                                        ArrayFloat("1", precision=50)))
+            elems_list.append(mod_coeffs_third_term(k, mod)[idx]*x_power)
+
+        return functools.reduce(operator.add, elems_list, ArrayFloat("0", precision=50))
+    return f
 
 
 if __name__ == "__main__":
@@ -323,13 +357,48 @@ if __name__ == "__main__":
 
     # 1d
     # derived from x - f(x)/f'(x)
-    def new_x_func(x): return (x*x*x) - ArrayFloat("0.5", precision=54)*x
-    ten_power_fifty = ArrayFloat(
-        "0.000000000000000000000000000000000000000000000000001", precision=54)
+    # def new_x_func(x): return (x*x*x) - ArrayFloat("0.5", precision=54)*x
+    # ten_power_fifty = ArrayFloat(
+    #     "0.000000000000000000000000000000000000000000000000001", precision=54)
 
-    print(find_root_newton(new_x_func, ArrayFloat(
-        "1", precision=54), ten_power_fifty)[0])
+    # print(find_root_newton(new_x_func, ArrayFloat(
+    #     "1", precision=54), ten_power_fifty)[0])
 
     # for a convergent case, we expect the difference between one iteration to the next to decrease over iterations.
     # if the magnitude of the difference between iterations has reached the level of 10^50, then we would not expect
     # following iterations to have enough of an impact on the estimation to deviate it from that value.
+
+    # q1e - let this run, it takes about 5 seconds on my machine, but depends on your multithreading capabilities
+    powers = list(range(20, -1, -1))
+
+    ten_power_ten = ArrayFloat("0.0000000001", precision=50)
+    roots = list(range(1, 21))
+
+    k_range = range(-50, 10)
+    all_probs = itertools.product(k_range, roots)
+
+    def v_k_tup_map(v_k_tup):
+        print(v_k_tup)
+        return crazy_func(v_k_tup[0], mod=True)(
+            ArrayFloat(str(v_k_tup[1]), precision=50))
+
+    with Pool() as pool:
+        results_eval = list(pool.map(v_k_tup_map, all_probs))
+
+    def chunks(lst, n):
+        for i in range(0, len(lst), n):
+            yield lst[i:i + n]
+
+    chunk_results = list(zip(k_range, chunks(results_eval, 20)))
+    chunk_result_iter = iter(chunk_results)
+
+    while str((next_elem := next(chunk_result_iter))[1]) == "[0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]":
+        print(next_elem[0], next_elem[1])
+
+    # this should print the first element that isn't empty
+    print(next_elem[0], next_elem[1])
+
+    print((next_elem := next(chunk_result_iter))[0], next_elem[1])
+    print((next_elem := next(chunk_result_iter))[0], next_elem[1])
+    print((next_elem := next(chunk_result_iter))[0], next_elem[1])
+    print((next_elem := next(chunk_result_iter))[0], next_elem[1])
