@@ -16,12 +16,14 @@ def gen_cobweb_plot(function, pop, show=True):
 
     pop_p, pop_pplus = (doubled_list := __gen_doubled_list(pop))[
         :-2], doubled_list[1:-1]
-    domain_linspace = np.linspace(min(pop), max(pop), 1000)
+    domain_linspace = np.linspace(-100, 100, 1000)
 
     plt.plot(domain_linspace, list(map(function, domain_linspace)))
-    plt.plot(pop[0], pop[0], 'ro')
+    plt.plot(pop[0], pop[0], 'go', label="starting position")
+    plt.plot(pop[-1], pop[-1], 'ro', label="ending position")
     plt.plot(pop_p, pop_pplus)
-    plt.plot(domain_linspace, domain_linspace)
+    plt.plot(domain_linspace, domain_linspace, label = "y = x")
+    plt.legend(loc="best")
     if show:
         plt.show()
 
@@ -29,12 +31,18 @@ def gen_cobweb_plot(function, pop, show=True):
 if __name__ == "__main__":
     def funct(m, c): return lambda x: x*m + c
 
-    num_gens = 50
-    m = 2
-    c = 3
-
-    x0 = 1
+    num_gens = 100
+    m = -0.5
+    c = -1
+    x0 = 8
 
     xs = list(itertools.islice(model(m, c, x0, funct), num_gens))
 
-    gen_cobweb_plot(funct(m, c), xs)
+    gen_cobweb_plot(funct(m, c), xs, show=False)
+    plt.xlim(-10, 10)
+    plt.ylim(-10, 10)
+    plt.title(f"m = {m}, c = {c}, x0 = {x0}")
+    plt.xlabel("x at timestep t")
+    plt.ylabel("x at timestep t+1")
+    plt.show()
+
