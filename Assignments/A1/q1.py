@@ -1,3 +1,5 @@
+from progress.bar import Bar
+import sys
 import copy
 import itertools
 import functools
@@ -369,16 +371,12 @@ if __name__ == "__main__":
     # following iterations to have enough of an impact on the estimation to deviate it from that value.
 
     # q1e - let this run, it takes about 5 seconds on my machine, but depends on your multithreading capabilities
-    powers = list(range(20, -1, -1))
-
-    ten_power_ten = ArrayFloat("0.0000000001", precision=50)
-    roots = list(range(1, 21))
-
-    k_range = range(-50, 10)
+    roots = range(1, 21)
+    k_range = range(-20, 10)
+    
     all_probs = itertools.product(k_range, roots)
 
     def v_k_tup_map(v_k_tup):
-        print(v_k_tup)
         return crazy_func(v_k_tup[0], mod=True)(
             ArrayFloat(str(v_k_tup[1]), precision=50))
 
