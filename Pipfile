@@ -10,7 +10,7 @@ jupyter = "*"
 jupyterlab = "*"
 jupyterlab-git = "*"
 scipy = "*"
-progress = "*"
+multiprocess = "*"
 
 [dev-packages]
 autopep8 = "*"

@@ -1,5 +1,3 @@
-from progress.bar import Bar
-import sys
 import copy
 import itertools
 import functools
