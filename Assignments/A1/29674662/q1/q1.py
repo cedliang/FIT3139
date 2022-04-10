@@ -5,7 +5,7 @@ import numpy as np
 import operator
 from multiprocess import Pool
 
-
+#cedric liang 29674662
 class ArrayFloat:
     mult_table = [[([], 0), ([], 0), ([], 0), ([], 0), ([], 0), ([], 0), ([], 0), ([], 0), ([], 0), ([], 0)],
                   [([], 0), ([1], 0), ([2], 0), ([3], 0), ([4], 0),
@@ -34,6 +34,8 @@ class ArrayFloat:
 
     # rounding error exists only for the shorthand string representation
     def __str__(self):
+        # uncomment this to get more precision printed than the implicit conversion to float gives
+        # print(self.array)
         return self.sign + str(int("".join(map(str, self.array))) * 10 ** self.exponent) if self.array else "0."
 
     def __repr__(self):
@@ -349,20 +351,20 @@ def crazy_func(k, mod=False):
 
 
 if __name__ == "__main__":
-    # a = ArrayFloat("3.1415926565897932384626")
-    # b = ArrayFloat("2.7182818284590452353602")
+    a = ArrayFloat("3.1415926565897932384626")
+    b = ArrayFloat("2.7182818284590452353602")
 
-    # print(a + b)
-    # print(a * b)
+    print(a + b)
+    print(a * b)
 
     # 1d
     # derived from x - f(x)/f'(x)
-    # def new_x_func(x): return (x*x*x) - ArrayFloat("0.5", precision=54)*x
-    # ten_power_fifty = ArrayFloat(
-    #     "0.000000000000000000000000000000000000000000000000001", precision=54)
+    def new_x_func(x): return (x*x*x) - ArrayFloat("0.5", precision=100)*x
+    ten_power_fifty = ArrayFloat(
+        "0.000000000000000000000000000000000000000000000000001", precision=100)
 
-    # print(find_root_newton(new_x_func, ArrayFloat(
-    #     "1", precision=54), ten_power_fifty)[0])
+    print(find_root_newton(new_x_func, ArrayFloat(
+        "1", precision=100), ten_power_fifty)[0])
 
     # for a convergent case, we expect the difference between one iteration to the next to decrease over iterations.
     # if the magnitude of the difference between iterations has reached the level of 10^50, then we would not expect

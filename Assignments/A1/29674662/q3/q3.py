@@ -2,6 +2,7 @@ import itertools
 import numpy as np
 import matplotlib.pyplot as plt
 
+#cedric liang 29674662
 
 def model(m, c, x0, funct):
     yield x0
