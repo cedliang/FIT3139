@@ -17,7 +17,7 @@ def singleWorker(trials, num_players):
 
 
 if __name__ == '__main__':
-    n = 10000000
+    n = 1000000
     num_players = 3
 
     per_core = [(n, num_players)] * 8
