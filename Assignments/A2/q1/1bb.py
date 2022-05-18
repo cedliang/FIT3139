@@ -73,7 +73,7 @@ if __name__ == "__main__":
     ns = cores*[samples_per_core]
     probs = []
 
-    fhunts = list([0.3557])
+    fhunts = [0.1, 0.2, 0.3, 0.4, 0.5]
 
     for fhunt in fhunts:
         w = partial(par_gillespie_worker, fhunt)
